@@ -1,0 +1,157 @@
+<html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flight Details</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        .flight-container {
+            width: 50%;
+            margin: 50px auto;
+            padding: 20px;
+            border-radius: 10px;
+            background: white;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+        }
+        label, input {
+            display: block;
+            width: 80%;
+            margin: 10px auto;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #ccc;
+            border-top: none;
+            z-index: 99;
+            background: white;
+            width: 80%;
+            left: 10%;
+        }
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            border-bottom: 1px solid #ddd;
+        }
+        .autocomplete-items div:hover {
+            background-color: #e9e9e9;
+        }
+        .flight-results {
+            display: none;
+            margin-top: 20px;
+        }
+        table {
+            width: 80%;
+            margin: auto;
+            border-collapse: collapse;
+            background: white;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+    <div class="flight-container">
+        <h2>Flight Details</h2>
+        <form id="flightForm">
+            <label for="departure">Departure:</label>
+            <input type="text" id="departure" name="departure" placeholder="Search for Departure">
+            <div id="departure-list" class="autocomplete-items"></div>
+
+            <label for="destination">Destination:</label>
+            <input type="text" id="destination" name="destination" placeholder="Search for Destination">
+            <div id="destination-list" class="autocomplete-items"></div>
+
+            <label for="travelDate">Date of Travel:</label>
+            <input type="date" id="travelDate" name="travelDate">
+
+            <button type="button" onclick="searchFlights()">Search Flights</button>
+        </form>
+    </div>
+
+    <div class="flight-results" id="flightResults">
+        <h2>Available Flights</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Flight Number</th>
+                    <th>Departure</th>
+                    <th>Destination</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Price (INR &amp; Local Currency)</th>
+                    <th>Book</th>
+                </tr>
+            </thead>
+            <tbody id="flightTableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        function getRandomTime() {
+            let hours = Math.floor(Math.random() * 24).toString().padStart(2, '0');
+            let minutes = Math.floor(Math.random() * 60).toString().padStart(2, '0');
+            return `${hours}:${minutes}`;
+        }
+
+        function getRandomPrice() {
+            let priceUSD = (Math.random() * (800 - 200) + 200).toFixed(2);
+            let priceINR = (priceUSD * 82).toFixed(2);
+            return `₹${priceINR} / $${priceUSD}`;
+        }
+
+        function searchFlights() {
+            let departure = document.getElementById("departure").value;
+            let destination = document.getElementById("destination").value;
+            let travelDate = document.getElementById("travelDate").value;
+
+            if (!departure || !destination || !travelDate) {
+                alert("Please select departure, destination, and date.");
+                return;
+            }
+
+            let tableBody = document.getElementById("flightTableBody");
+            tableBody.innerHTML = "";
+
+            let row = `<tr>
+                <td>FL${Math.floor(Math.random() * 900 + 100)}</td>
+                <td>${departure}</td>
+                <td>${destination}</td>
+                <td>${travelDate}</td>
+                <td>${getRandomTime()}</td>
+                <td>${getRandomPrice()}</td>
+                <td><button onclick="bookTicket()">Book</button></td>
+            </tr>`;
+            tableBody.innerHTML += row;
+
+            document.getElementById("flightResults").style.display = "block";
+        }
+
+        function bookTicket() {
+            alert("Redirecting to the payment gateway...");
+            window.location.href = "file:///C:/Users/MARCH/Desktop/Swaraj%20Airways/payment.html";
+        }
+    </script>
+
+
+</body></html>

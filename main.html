@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Swaraj Airways Booking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+    .container {
+      max-width: 800px;
+      background: white;
+      padding: 20px;
+      margin: auto;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      background-color: #007bff;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .step {
+      display: none;
+    }
+    .visible {
+      display: block;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      padding: 8px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    .ticket-preview {
+      background: #e6ffe6;
+      padding: 15px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Step 1: Flight Search -->
+    <div class="step visible" id="step1">
+      <h2>Search Flights</h2>
+      <label for="from">From:</label>
+      <input type="text" id="from" />
+      <label for="to">To:</label>
+      <input type="text" id="to" />
+      <label for="date">Date:</label>
+      <input type="text" id="date" placeholder="dd/mm/yyyy" onfocus="(this.type='date')" onblur="(this.type='text')" />
+      <label for="flightClass">Class:</label>
+      <select id="flightClass">
+        <option value="Economy">Economy</option>
+        <option value="Business">Business</option>
+        <option value="First Class">First Class</option>
+      </select>
+      <button onclick="generateFlights()">Search Flights</button>
+      <div id="flightTableContainer"></div>
+    </div>
+
+    <!-- Step 2: Personal Info -->
+    <div class="step" id="step2">
+      <h2>Personal Information</h2>
+      <label for="fname">First Name:</label>
+      <input type="text" id="fname" />
+      <label for="lname">Last Name:</label>
+      <input type="text" id="lname" />
+      <label for="age">Age:</label>
+      <input type="number" id="age" />
+      <label for="email">Email:</label>
+      <input type="email" id="email" />
+      <label for="mobileCountry">Country Code:</label>
+      <select id="mobileCountry">
+        <option value="+1">+1 (USA)</option>
+        <option value="+91">+91 (India)</option>
+        <option value="+44">+44 (UK)</option>
+        <option value="+61">+61 (Australia)</option>
+        <!-- Add other country codes as needed -->
+      </select>
+      <label for="mobile">Mobile:</label>
+      <input type="tel" id="mobile" pattern="[0-9]{10}" maxlength="10" placeholder="10-digit number" />
+      <button onclick="goToStep3()">Proceed to Payment</button>
+    </div>
+
+    <!-- Step 3: Payment -->
+    <div class="step" id="step3">
+      <h2>Payment</h2>
+      <label for="amount">Amount (USD):</label>
+      <input type="text" id="amount" readonly />
+      <label for="mode">Payment Mode:</label>
+      <select id="mode" onchange="toggleQR()">
+        <option value="Credit Card">Credit Card</option>
+        <option value="Debit Card">Debit Card</option>
+        <option value="Net Banking">Net Banking</option>
+        <option value="QR Code">QR Code</option>
+      </select>
+      <label for="card">Card Number:</label>
+      <input type="text" id="card" maxlength="16" />
+      <label for="expiry">Expiry Date:</label>
+      <input type="month" id="expiry" />
+      <label for="cvv">CVV:</label>
+      <input type="password" id="cvv" maxlength="3" />
+      <div id="qrContainer" style="display: none;">
+        <p>Scan QR code to complete the payment:</p>
+        <img src="https://via.placeholder.com/150" alt="QR Code" />
+      </div>
+      <button onclick="goToStep4()">Pay Now</button>
+    </div>
+
+    <!-- Step 4: Ticket Preview -->
+    <div class="step" id="step4">
+      <h2>Ticket Preview</h2>
+      <div class="ticket-preview" id="ticketInfo"></div>
+    </div>
+  </div>
+
+  <script>
+    const flightData = {};
+    const airlines = [
+      'Air India', 'Indigo', 'Air India Express', 'SpiceJet', 
+      'Emirates', 'Etihad Airways', 'Qatar Airways', 'Lufthansa', 'Singapore Airlines',
+      'Turkish Airlines', 'Air France', 'British Airways', 'Cathay Pacific', 'ANA',
+      'Japan Airlines', 'KLM Royal Dutch', 'Thai Airways', 'EVA Air', 'Swiss Intl',
+      'Korean Air', 'Philippine Airlines', 'Virgin Atlantic', 'Oman Air', 'Malaysia Airlines'
+    ];
+
+    function showStep(step) {
+      document.querySelectorAll('.step').forEach(s => s.classList.remove('visible'));
+      document.getElementById(step).classList.add('visible');
+    }
+
+    function getRandomTime() {
+      let hour = Math.floor(Math.random() * 24).toString().padStart(2, '0');
+      let minute = Math.floor(Math.random() * 60).toString().padStart(2, '0');
+      return `${hour}:${minute}`;
+    }
+
+    function getRandomPrice(classType) {
+      let min, max;
+      if (classType === 'First Class') { min = 1000; max = 2000; }
+      else if (classType === 'Business') { min = 600; max = 999; }
+      else { min = 200; max = 599; }
+
+      let usd = (Math.random() * (max - min) + min).toFixed(2);
+      let inr = (usd * 82).toFixed(2);
+      return { usd, inr };
+    }
+
+    function generateFlights() {
+      const from = document.getElementById("from").value;
+      const to = document.getElementById("to").value;
+      const date = document.getElementById("date").value;
+      const classType = document.getElementById("flightClass").value;
+
+      if (!from || !to || !date || !classType) return alert("Please fill all fields.");
+
+      let tableHTML = `<table>
+        <tr><th>Airline</th><th>Flight No.</th><th>Time</th><th>Class</th><th>Price</th><th>Layover</th><th>Select</th></tr>`;
+
+      for (let i = 0; i < 20; i++) {
+        const airline = airlines[i % airlines.length];
+        const flightNo = airline.substring(0, 2).toUpperCase() + Math.floor(Math.random() * 900 + 100);
+        const time = getRandomTime();
+        const price = getRandomPrice(classType);
+        const layover = Math.random() < 0.4 ? "1 Stop via Doha" : "Non-stop";
+
+        tableHTML += `<tr>
+          <td>${airline}</td>
+          <td>${flightNo}</td>
+          <td>${time}</td>
+          <td>${classType}</td>
+          <td>$${price.usd} / ₹${price.inr}</td>
+          <td>${layover}</td>
+          <td><button onclick='selectFlight("${airline}", "${flightNo}", "${time}", "${classType}", "${price.usd}", "${price.inr}", "${from}", "${to}", "${date}", "${layover}")'>Select</button></td>
+        </tr>`;
+      }
+
+      tableHTML += `</table>`;
+      document.getElementById("flightTableContainer").innerHTML = tableHTML;
+    }
+
+    function selectFlight(airline, flightNo, time, classType, usd, inr, from, to, date, layover) {
+      Object.assign(flightData, {
+        airline, flightNumber: flightNo, time, class: classType,
+        amountUSD: usd, amountINR: inr, from, to, date, layover
+      });
+      showStep('step2');
+    }
+
+    function goToStep3() {
+      flightData.firstName = document.getElementById('fname').value;
+      flightData.lastName = document.getElementById('lname').value;
+      flightData.age = document.getElementById('age').value;
+      flightData.email = document.getElementById('email').value;
+      flightData.mobile = document.getElementById('mobileCountry').value + document.getElementById('mobile').value;
+
+      document.getElementById('amount').value = flightData.amountUSD;
+
+      if (flightData.firstName && flightData.lastName && flightData.email && flightData.mobile) {
+        showStep('step3');
+      } else {
+        alert("Complete personal info.");
+      }
+    }
+
+    function goToStep4() {
+      flightData.paymentMode = document.getElementById('mode').value;
+
+      if (flightData.paymentMode === "QR Code") {
+        document.getElementById('qrContainer').style.display = "block";
+      } else {
+        document.getElementById('qrContainer').style.display = "none";
+      }
+
+      document.getElementById('ticketInfo').innerHTML = `
+        <p><strong>Name:</strong> ${flightData.firstName} ${flightData.lastName}</p>
+        <p><strong>Email:</strong> ${flightData.email}</p>
+        <p><strong>Flight:</strong> ${flightData.flightNumber} (${flightData.airline})</p>
+        <p><strong>From:</strong> ${flightData.from}</p>
+        <p><strong>To:</strong> ${flightData.to}</p>
+        <p><strong>Date:</strong> ${flightData.date}</p>
+        <p><strong>Time:</strong> ${flightData.time}</p>
+        <p><strong>Class:</strong> ${flightData.class}</p>
+        <p><strong>Layover:</strong> ${flightData.layover}</p>
+        <p><strong>Amount Paid:</strong> $${flightData.amountUSD} / ₹${flightData.amountINR}</p>
+        <p><strong>Payment Mode:</strong> ${flightData.paymentMode}</p>
+        <p><strong>Status:</strong> ✅ Payment Successful</p>
+      `;
+      showStep('step4');
+    }
+
+    function toggleQR() {
+      const paymentMode = document.getElementById('mode').value;
+      if (paymentMode === "QR Code") {
+        document.getElementById('qrContainer').style.display = "block";
+      } else {
+        document.getElementById('qrContainer').style.display = "none";
+      }
+    }
+  </script>
+</body>
+</html>
